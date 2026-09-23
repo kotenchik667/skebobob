@@ -1,14 +1,24 @@
-name: Test Bot
+name: Brainrot Test
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "SKEBOB BOT WORKS"
-      - run: python3 --version
-      - run: sudo apt-get update
-      - run: sudo apt-get install -y ffmpeg
-      - run: ffmpeg -version
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - run: |
+          ffmpeg -y \
+          -f lavfi -i "color=c=magenta:s=1080x1920:d=6:r=30" \
+          -f lavfi -i "sine=frequency=500:duration=6" \
+          -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='WHAT IS BRO DOING':fontcolor=white:fontsize=80:borderw=6:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2" \
+          -c:v libx264 -pix_fmt yuv420p -c:a aac \
+          brainrot.mp4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brainrot-test
+          path: brainrot.mp4
