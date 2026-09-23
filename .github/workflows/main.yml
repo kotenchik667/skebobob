@@ -1,4 +1,4 @@
-name: Brainrot Voice Test
+name: Brainrot AI Test
 
 on:
   workflow_dispatch:
@@ -8,8 +8,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg curl
       - run: pip install piper-tts
+
+      - run: |
+          python3 - <<'PY'
+          import urllib.parse, subprocess
+
+          prompts = [
+              "silly 3D cartoon red chicken nugget with huge eyes and tiny sneakers stealing a tiny car, absurd meme, glossy plastic, colorful supermarket, vertical composition",
+              "same silly red chicken nugget driving extremely fast in a tiny car, terrified face, giant toilet chasing behind, absurd 3D cartoon meme, vertical composition",
+              "same red chicken nugget flying into space while holding the tiny car, giant moon with shocked face, chaotic colorful 3D cartoon, vertical composition",
+              "same red chicken nugget sitting proudly on top of the moon while a giant toilet cries below, ridiculous 3D cartoon meme, vertical composition"
+          ]
+
+          for i,p in enumerate(prompts,1):
+              q=urllib.parse.quote(p)
+              url=f"https://image.pollinations.ai/prompt/{q}?width=1080&height=1920&seed={100+i}"
+              subprocess.run(["curl","-L","--fail","--retry","3",url,"-o",f"scene{i}.jpg"],check=True)
+          PY
 
       - run: python3 -m piper.download_voices en_US-lessac-medium
 
@@ -17,18 +34,28 @@ jobs:
           python3 -m piper \
           -m en_US-lessac-medium \
           -f voice.wav \
-          -- "BRO WHAT ARE YOU DOING. PUT THE NUGGET DOWN."
+          -- "BRO. THE NUGGET STOLE THE CAR. WHY IS THE TOILET CHASING HIM? WAIT. HE STOLE THE MOON TOO. BRO PUT IT BACK."
 
       - run: |
-          ffmpeg -y \
-          -f lavfi -i "color=c=magenta:s=1080x1920:d=6:r=30" \
-          -i voice.wav \
-          -vf "drawtext=text='PUT THE NUGGET DOWN':fontcolor=white:fontsize=80:borderw=6:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2" \
-          -c:v libx264 -pix_fmt yuv420p \
-          -c:a aac -shortest \
-          brainrot.mp4
+          for i in 1 2 3 4; do
+            ffmpeg -y -loop 1 -i scene${i}.jpg -t 3 \
+            -vf "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,zoompan=z='min(zoom+0.002,1.15)':d=90:s=1080x1920:fps=30" \
+            -c:v libx264 -pix_fmt yuv420p clip${i}.mp4
+          done
+
+      - run: |
+          printf "file 'clip1.mp4'\nfile 'clip2.mp4'\nfile 'clip3.mp4'\nfile 'clip4.mp4'\n" > list.txt
+          ffmpeg -y -f concat -safe 0 -i list.txt -i voice.wav \
+          -filter_complex "[1:a]apad=pad_dur=12[a]" \
+          -map 0:v -map "[a]" -t 12 \
+          -c:v copy -c:a aac brainrot.mp4
 
       - uses: actions/upload-artifact@v4
         with:
-          name: brainrot-voice-test
-          path: brainrot.mp4
+          name: brainrot-ai
+          path: |
+            brainrot.mp4
+            scene1.jpg
+            scene2.jpg
+            scene3.jpg
+            scene4.jpg
