@@ -9,4 +9,6 @@ jobs:
     steps:
       - run: echo "SKEBOB BOT WORKS"
       - run: python3 --version
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y ffmpeg
       - run: ffmpeg -version
