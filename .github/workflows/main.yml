@@ -8,5 +8,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "SKEBOB BOT WORKS"
-      - run: python --version
+      - run: python3 --version
       - run: ffmpeg -version
