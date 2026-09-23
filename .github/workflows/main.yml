@@ -1,4 +1,4 @@
-name: Brainrot Test
+name: Brainrot Voice Test
 
 on:
   workflow_dispatch:
@@ -8,17 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pip install piper-tts
+
+      - run: python3 -m piper.download_voices en_US-lessac-medium
+
+      - run: |
+          python3 -m piper \
+          -m en_US-lessac-medium \
+          -f voice.wav \
+          -- "BRO WHAT ARE YOU DOING. PUT THE NUGGET DOWN."
 
       - run: |
           ffmpeg -y \
           -f lavfi -i "color=c=magenta:s=1080x1920:d=6:r=30" \
-          -f lavfi -i "sine=frequency=500:duration=6" \
-          -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='WHAT IS BRO DOING':fontcolor=white:fontsize=80:borderw=6:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2" \
-          -c:v libx264 -pix_fmt yuv420p -c:a aac \
+          -i voice.wav \
+          -vf "drawtext=text='PUT THE NUGGET DOWN':fontcolor=white:fontsize=80:borderw=6:bordercolor=black:x=(w-text_w)/2:y=(h-text_h)/2" \
+          -c:v libx264 -pix_fmt yuv420p \
+          -c:a aac -shortest \
           brainrot.mp4
 
       - uses: actions/upload-artifact@v4
         with:
-          name: brainrot-test
+          name: brainrot-voice-test
           path: brainrot.mp4
